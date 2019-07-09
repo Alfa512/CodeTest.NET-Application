@@ -14,7 +14,7 @@ namespace CodeTest.NET_Application.Common.Contracts.Services
         UserVm Update(UserVm user);
         List<UserVm> LoadFromFile(byte[] content);
         List<UserVm> LoadFromText(string text);
-        void Delete(int id);
+        void Delete(UserVm user);
         IEnumerable<UserVm> OrderUsers(List<UserVm> users, OrderByUserFilter filter);
     }
 }

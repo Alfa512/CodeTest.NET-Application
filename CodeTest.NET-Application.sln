@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeTest.NET-Application.Ma
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeTest.NET-Application.Business.Services", "CodeTest.NET-Application.Business.Services\CodeTest.NET-Application.Business.Services.csproj", "{19801E23-EEC5-4231-B2C2-F97CB183A550}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeTest.NET-Application.Console", "CodeTest.NET-Application.Console\CodeTest.NET-Application.Console.csproj", "{940F9945-AE24-445D-9F99-212EBE815524}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{19801E23-EEC5-4231-B2C2-F97CB183A550}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19801E23-EEC5-4231-B2C2-F97CB183A550}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19801E23-EEC5-4231-B2C2-F97CB183A550}.Release|Any CPU.Build.0 = Release|Any CPU
+		{940F9945-AE24-445D-9F99-212EBE815524}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{940F9945-AE24-445D-9F99-212EBE815524}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{940F9945-AE24-445D-9F99-212EBE815524}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{940F9945-AE24-445D-9F99-212EBE815524}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

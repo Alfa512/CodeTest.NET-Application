@@ -66,7 +66,6 @@ namespace CodeTest.NET_Application.Common.Services
         {
             var user = UserMapper.Mapper().Map<User>(userModel);
             _repository.Add(user);
-            //_repository.SaveCganges();
             if (user.ID > 0)
             {
                 return DomainToView(user);
@@ -121,14 +120,11 @@ namespace CodeTest.NET_Application.Common.Services
             return users;
         }
 
-        /*ToDo Wasn't Tested*/
-        public void Delete(int id)
-        {
-            var user = _repository.All().FirstOrDefault(u => u.ID == id);
+        public void Delete(UserVm user)
+        {;
             if (user != null)
             {
-                _repository.Delete(user);
-                //_repository.SaveCganges();
+                _repository.Delete(ViewToDomain(user));
             }
         }
 
