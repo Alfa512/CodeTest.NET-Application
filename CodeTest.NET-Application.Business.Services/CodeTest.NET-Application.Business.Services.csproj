@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>CodeTest.NET_Application.Business.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CodeTest.NET-Application.Common.Models\CodeTest.NET-Application.Common.Models.csproj" />
+  </ItemGroup>
+
+</Project>
