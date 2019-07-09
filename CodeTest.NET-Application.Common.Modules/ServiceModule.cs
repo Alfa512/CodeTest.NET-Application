@@ -6,14 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CodeTest.NET_Application.Common.Modules
 {
-    public static class ServiceModule
+    public static class ServiceModuleW
     {
         public static void Register(IServiceCollection services, IConfiguration configuration)
         {
             services.AddSingleton<IConfigurationService, ConfigurationService>();
 
             services.AddTransient<IUserService, UserService>();
-            services.AddTransient<ITaskService, TaskService>();
         }
     }
 }

@@ -9,14 +9,23 @@ namespace CodeTest.NET_Application.Common.Services
     {
         private IConfiguration _configuration;
 
-        public ConfigurationService(IConfiguration configuration)
+        public ConfigurationService()
         {
-            _configuration = configuration;
+            _configuration = LoadConfiguration();
         }
 
         public string UserStoragePath
         {
             get { return _configuration["UserStoragePath"]; }
+        }
+
+        public static IConfiguration LoadConfiguration()
+        {
+            var builder = new ConfigurationBuilder()
+                //.SetBasePath()
+                .AddJsonFile("appsettings.json", optional: true,
+                    reloadOnChange: true);
+            return builder.Build();
         }
     }
 }

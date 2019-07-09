@@ -38,12 +38,12 @@ namespace CodeTest.NET_Application.Data
             _endRowOffset = 0;
             _delimeter = ',';
             _usersDirty = true;
-            _userStorageFilePath = configurationService.UserStoragePath;
+            _userStorageFilePath = "C:/Temp/Users.csv"; //configurationService.UserStoragePath;
         }
 
         IUserRepository IDataContext.Users => new UserRepository(this);
 
-        public TEntity Add<TEntity>(TEntity entity) where TEntity : class, IEntity
+        public TEntity Add<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
         {
             string csv = Write(entity, true);
 
@@ -53,7 +53,7 @@ namespace CodeTest.NET_Application.Data
 
             return entity;
         }
-        public IEnumerable<TEntity> AddRange<TEntity>(List<TEntity> list) where TEntity : class, IEntity
+        public IEnumerable<TEntity> AddRange<TEntity>(List<TEntity> list) where TEntity : class, IEntity, new()
         {
             string csv = Write(list, true);
             GetStream<TEntity>().Seek(0, SeekOrigin.End);
@@ -63,7 +63,7 @@ namespace CodeTest.NET_Application.Data
             return list;
         }
 
-        public TEntity Update<TEntity>(TEntity entity) where TEntity : class, IEntity
+        public TEntity Update<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
         {
             if (entity.ID <= 0)
                 return entity;
@@ -78,7 +78,7 @@ namespace CodeTest.NET_Application.Data
             return entity;
         }
 
-        public TEntity Delete<TEntity>(TEntity entity) where TEntity : class, IEntity
+        public TEntity Delete<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
         {
             if (entity.ID <= 0)
                 return entity;
@@ -92,7 +92,7 @@ namespace CodeTest.NET_Application.Data
             return entity;
         }
 
-        private void RewriteEntities<TEntity>(List<TEntity> entities) where TEntity : class, IEntity
+        private void RewriteEntities<TEntity>(List<TEntity> entities) where TEntity : class, IEntity, new()
         {
             string csv = Write(entities, true);
             GetStream<TEntity>().Seek(0, SeekOrigin.Begin);
@@ -100,7 +100,7 @@ namespace CodeTest.NET_Application.Data
             _usersDirty = true;
         }
 
-        public IEnumerable<TEntity> All<TEntity>() where TEntity : class, IEntity
+        public IEnumerable<TEntity> All<TEntity>() where TEntity : class, IEntity, new()
         {
             var convertDateTime = new Func<double, DateTime>(csvDate =>
             {
@@ -165,8 +165,8 @@ namespace CodeTest.NET_Application.Data
                 // Now iterate over all the rows
                 for (int rowIndex = startRow + 1; rowIndex < endRow; rowIndex++)
                 {
-                    //var item = new TEntity();
-                    //var item = new TEntity();
+                    //TEntity item;
+                    var item = new TEntity();
                     columns.ForEach(column =>
                     {
                         var value = lines.ElementAt(rowIndex).Split(_delimeter)[column.Index];
@@ -282,8 +282,8 @@ namespace CodeTest.NET_Application.Data
 
                             try
                             {
-                                retList.Add((TEntity)parsedValue);
-                                //prop.PropertyInfo.SetValue(item, parsedValue);
+                                //retList.Add((TEntity)parsedValue);
+                                prop.PropertyInfo.SetValue(item, parsedValue);
                             }
                             catch (Exception ex)
                             {
@@ -291,7 +291,7 @@ namespace CodeTest.NET_Application.Data
                             }
                         }
                     });
-                    //retList.Add(item);
+                    retList.Add(item);
                 }
 
                 return retList;
@@ -300,7 +300,7 @@ namespace CodeTest.NET_Application.Data
 
         private Stream GetStream<TEntity>()
         {
-            switch (typeof(TEntity).ToString())
+            switch (typeof(TEntity).Name.ToString())
             {
                 case "User":
                     return UserStream();
@@ -311,25 +311,26 @@ namespace CodeTest.NET_Application.Data
 
         private static Stream UserStream()
         {
-            lock (_userStorage)
+            if (_userStorage == null)
             {
-                if (_usersDirty || _userStorage == null)
+                _userStorage = File.Open(_userStorageFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                return _userStorage;
+            }
+            else
+            {
+                lock (_userStorage)
                 {
-                    if (_userStorage == null)
-                    {
-                        _userStorage = File.Open(_userStorageFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                    }
-                    else
+                    if (_usersDirty)
                     {
                         _userStorage.Close();
                         _userStorage = File.Open(_userStorageFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+                        _usersDirty = false;
+                        return _userStorage;
                     }
 
-                    _usersDirty = false;
-                    return _userStorage;
+                    _userStorage.Seek(0, SeekOrigin.Begin);
                 }
-
-                _userStorage.Seek(0, SeekOrigin.Begin);
                 return _userStorage;
             }
         }

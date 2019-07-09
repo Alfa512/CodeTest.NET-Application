@@ -77,9 +77,9 @@ namespace CodeTest.NET_Application.Controllers
 
         [AllowAnonymous]
         [Route("delete")]
-        public void Delete(int id)
+        public void Delete(UserVm user)
         {
-            _userService.Delete(id);
+            _userService.Delete(user);
         }
     }
 }

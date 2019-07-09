@@ -5,7 +5,7 @@ using CodeTest.NET_Application.Data.Models;
 
 namespace CodeTest.NET_Application.Data.Repositories
 {
-    public abstract class GenericRepository<T> : IDataRepository<T> where T : class, IEntity
+    public abstract class GenericRepository<T> : IDataRepository<T> where T : class, IEntity, new()
     {
         protected readonly IDataContext Context;
 
