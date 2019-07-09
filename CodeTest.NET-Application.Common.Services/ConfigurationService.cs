@@ -14,9 +14,9 @@ namespace CodeTest.NET_Application.Common.Services
             _configuration = configuration;
         }
 
-        public string ConnectionString
+        public string UserStoragePath
         {
-            get { return _configuration.GetValue<string>("ConnectionString"); }
+            get { return _configuration["UserStoragePath"]; }
         }
     }
 }

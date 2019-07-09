@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodeTest.NET-Application.Common.Models\CodeTest.NET-Application.Common.Models.csproj" />
+    <ProjectReference Include="..\CodeTest.NET-Application.Data.Model\CodeTest.NET-Application.Data.Models.csproj" />
   </ItemGroup>
 
 </Project>

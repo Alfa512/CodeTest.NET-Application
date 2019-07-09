@@ -2,6 +2,6 @@
 {
     public interface IConfigurationService
     {
-        string ConnectionString { get;  }
+        string UserStoragePath { get;  }
     }
 }

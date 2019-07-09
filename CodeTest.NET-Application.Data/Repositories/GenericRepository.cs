@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using CodeTest.NET_Application.Common.Contracts.Data;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,34 +16,27 @@ namespace CodeTest.NET_Application.Data.Repositories
             Context = context;
         }
 
-        public IQueryable<T> All()
+        public IEnumerable<T> All()
         {
-            return Context.Set<T>();
+            return Context.All<T>();
         }
 
-        public void Add(T entity)
+        public virtual void Add(T entity)
         {
-            Context.Set<T>().Add(entity);
+            Context.Add(entity);
         }
 
         public void Update(T entity)
         {
-            var entry = Context.Entry(entity);
-            if (entry.State == EntityState.Detached)
-            {
-                Context.Set<T>().Attach(entity);
-                entry = Context.Entry(entity);
-            }
-
-            entry.State = EntityState.Modified;
+            Context.Update(entity);
         }
 
         public void Delete(T entity)
         {
-            Context.Set<T>().Remove(entity);
+            Context.Delete(entity);
         }
 
-        public void SaveCganges()
+        public void SaveChanges()
         {
             Context.SaveChanges();
         }

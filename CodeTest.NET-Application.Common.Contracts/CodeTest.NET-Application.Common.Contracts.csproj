@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.4" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CodeTest.NET-Application.Common.Models\CodeTest.NET-Application.Common.Models.csproj" />
     <ProjectReference Include="..\CodeTest.NET-Application.Data.Model\CodeTest.NET-Application.Data.Models.csproj" />
   </ItemGroup>
