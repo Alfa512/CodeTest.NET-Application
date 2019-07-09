@@ -48,7 +48,7 @@ namespace CodeTest.NET_Application.Common.Services
 
         public UserVm GetById(int id)
         {
-            return DomainToView(_repository.All().FirstOrDefault(u => u.Id == id));
+            return DomainToView(_repository.All().FirstOrDefault(u => u.ID == id));
         }
 
         public UserVm GetFirstByName(string firstName)
@@ -67,7 +67,7 @@ namespace CodeTest.NET_Application.Common.Services
             var user = UserMapper.Mapper().Map<User>(userModel);
             _repository.Add(user);
             //_repository.SaveCganges();
-            if (user.Id > 0)
+            if (user.ID > 0)
             {
                 return DomainToView(user);
             }
@@ -80,7 +80,7 @@ namespace CodeTest.NET_Application.Common.Services
         {
             var userModel = UserMapper.Mapper().Map<User>(userParam);
 
-            var user = _repository.All().FirstOrDefault(u => u.Id == userModel.Id);
+            var user = _repository.All().FirstOrDefault(u => u.ID == userModel.ID);
 
             if (user == null)
                 throw new ApplicationException("User not found");
@@ -124,7 +124,7 @@ namespace CodeTest.NET_Application.Common.Services
         /*ToDo Wasn't Tested*/
         public void Delete(int id)
         {
-            var user = _repository.All().FirstOrDefault(u => u.Id == id);
+            var user = _repository.All().FirstOrDefault(u => u.ID == id);
             if (user != null)
             {
                 _repository.Delete(user);

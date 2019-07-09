@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using CodeTest.NET_Application.Data.Models;
 
 namespace CodeTest.NET_Application.Common.Contracts.Repositories
 {
-    public interface IDataRepository<T> where T : class
+    public interface IDataRepository<T> where T : class, IEntity
     {
         IEnumerable<T> All();
         void Add(T entity);

@@ -11,10 +11,5 @@ namespace CodeTest.NET_Application.Data.Repositories
         {
             _context = context;
         }
-
-        public override void Add(User user) //where User : class
-        {
-
-        }
     }
 }

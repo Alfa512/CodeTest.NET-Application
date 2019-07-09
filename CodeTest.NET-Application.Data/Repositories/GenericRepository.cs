@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using CodeTest.NET_Application.Common.Contracts.Data;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using CodeTest.NET_Application.Data.Models;
 
 namespace CodeTest.NET_Application.Data.Repositories
 {
-    public abstract class GenericRepository<T> : IDataRepository<T> where T : class
+    public abstract class GenericRepository<T> : IDataRepository<T> where T : class, IEntity
     {
         protected readonly IDataContext Context;
 
