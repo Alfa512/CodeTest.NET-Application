@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using CodeTest.NET_Application.Business.Services;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
 using CodeTest.NET_Application.Common.Contracts.Services;
+using CodeTest.NET_Application.Common.Services;
 using CodeTest.NET_Application.Common.Models.ViewModel;
 using CodeTest.NET_Application.Data.Models;
 using CodeTest.NET_Application.Maps;
 
-namespace CodeTest.NET_Application.Common.Services
+namespace CodeTest.NET_Application.Business.Services
 {
     public class UserService : IUserService
     {
@@ -34,12 +34,13 @@ namespace CodeTest.NET_Application.Common.Services
 
         public IEnumerable<UserVm> FindByLastName(string lastName)
         {
-            return DomainToViewList(_repository.All().Where(u => u.LastName.Contains(lastName, StringComparison.CurrentCultureIgnoreCase)).ToList());
+            return DomainToViewList(_repository.All()
+                .Where(u => u.LastName.Contains(lastName, StringComparison.CurrentCultureIgnoreCase)).ToList());
         }
 
         public IEnumerable<UserVm> FindWithinAgeRange(int minAge, int maxAge)
         {
-            return DomainToViewList(_repository.All().Where(u => u.Age >= minAge && u.Age <= maxAge ).ToList());
+            return DomainToViewList(_repository.All().Where(u => u.Age >= minAge && u.Age <= maxAge).ToList());
         }
 
 
@@ -70,7 +71,7 @@ namespace CodeTest.NET_Application.Common.Services
 
             return GetById(userParam.Id);
         }
-        
+
         public List<UserVm> LoadFromFile(string path)
         {
             if (!File.Exists(path))
@@ -100,12 +101,13 @@ namespace CodeTest.NET_Application.Common.Services
             {
                 file.WriteLine($"{user.ID},{user.FirstName},{user.LastName},{user.Age}");
             }
-            file.Close();
 
+            file.Close();
         }
 
         public void Delete(UserVm user)
-        {;
+        {
+            ;
             if (user != null)
             {
                 _repository.Delete(ViewToDomain(user));
@@ -126,6 +128,7 @@ namespace CodeTest.NET_Application.Common.Services
 
             return vUsers;
         }
+
         private List<User> ViewToDomainList(List<UserVm> users)
         {
             var vUsers = new List<User>();

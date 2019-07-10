@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Text;
 using CodeTest.NET_Application.Data.Models;
 
-namespace CodeTest.NET_Application.Business.Services
+namespace CodeTest.NET_Application.Common.Services
 {
     public class CsvService
     {

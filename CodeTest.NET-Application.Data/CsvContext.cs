@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using CodeTest.NET_Application.Business.Services;
 using CodeTest.NET_Application.Common.Contracts.Data;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
 using CodeTest.NET_Application.Common.Contracts.Services;
+using CodeTest.NET_Application.Common.Services;
 using CodeTest.NET_Application.Data.Models;
 using CodeTest.NET_Application.Data.Repositories;
 
