@@ -8,13 +8,12 @@ namespace CodeTest.NET_Application.Common.Contracts.Services
     {
         IEnumerable<UserVm> GetAll();
         UserVm GetById(int id);
-        UserVm GetFirstByName(string lastName);
         IEnumerable<UserVm> FindByLastName(string lastName);
+        IEnumerable<UserVm> FindWithinAgeRange(int minAge, int maxAge);
         UserVm Create(UserVm user);
         UserVm Update(UserVm user);
         List<UserVm> LoadFromFile(byte[] content);
         List<UserVm> LoadFromText(string text);
         void Delete(UserVm user);
-        IEnumerable<UserVm> OrderUsers(List<UserVm> users, OrderByUserFilter filter);
     }
 }

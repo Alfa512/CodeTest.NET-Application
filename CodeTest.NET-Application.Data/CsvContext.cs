@@ -329,7 +329,15 @@ namespace CodeTest.NET_Application.Data
                         return _userStorage;
                     }
 
-                    _userStorage.Seek(0, SeekOrigin.Begin);
+                    if (_userStorage.CanSeek)
+                        _userStorage.Seek(0, SeekOrigin.Begin);
+                    else
+                    {
+                        _userStorage.Close();
+                        _userStorage = File.Open(_userStorageFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+                        _usersDirty = false;
+                    }
                 }
                 return _userStorage;
             }

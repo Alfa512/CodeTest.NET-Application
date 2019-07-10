@@ -51,14 +51,14 @@ namespace CodeTest.NET_Application.Common.Services
             return DomainToView(_repository.All().FirstOrDefault(u => u.ID == id));
         }
 
-        public UserVm GetFirstByName(string firstName)
-        {
-            return DomainToView(_repository.All().FirstOrDefault(u => string.Equals(u.FirstName, firstName, StringComparison.CurrentCultureIgnoreCase)));
-        }
-
         public IEnumerable<UserVm> FindByLastName(string lastName)
         {
             return DomainToViewList(_repository.All().Where(u => u.LastName.Contains(lastName, StringComparison.CurrentCultureIgnoreCase)).ToList());
+        }
+
+        public IEnumerable<UserVm> FindWithinAgeRange(int minAge, int maxAge)
+        {
+            return DomainToViewList(_repository.All().Where(u => u.Age >= minAge && u.Age <= maxAge ).ToList());
         }
 
 
