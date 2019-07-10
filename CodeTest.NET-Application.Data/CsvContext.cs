@@ -18,10 +18,6 @@ namespace CodeTest.NET_Application.Data
     {
         private CsvParser _csvParser;
         private IConfigurationService _configurationService;
-        private Dictionary<string, string> _map;
-        private int _startRowOffset;
-        private int _startColumnOffset;
-        private int _endRowOffset;
         private char _delimeter;
 
         private static bool _usersDirty;
@@ -32,10 +28,6 @@ namespace CodeTest.NET_Application.Data
         {
             _csvParser = new CsvParser();
             _configurationService = configurationService;
-            _map = null;
-            _startRowOffset = 0;
-            _startColumnOffset = 0;
-            _endRowOffset = 0;
             _delimeter = ',';
             _usersDirty = true;
             _userStorageFilePath = "C:/Temp/Users.csv"; //configurationService.UserStoragePath;
@@ -45,6 +37,7 @@ namespace CodeTest.NET_Application.Data
 
         public TEntity Add<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
         {
+            entity.ID = GetLastId<TEntity>() + 1;
             string csv = Write(entity, true);
 
             GetStream<TEntity>().Seek(0, SeekOrigin.End);
@@ -55,6 +48,11 @@ namespace CodeTest.NET_Application.Data
         }
         public IEnumerable<TEntity> AddRange<TEntity>(List<TEntity> list) where TEntity : class, IEntity, new()
         {
+            var lastId = GetLastId<TEntity>() + 1;
+            for (var i = 0; i < list.Count; i++, lastId++)
+            {
+                list[i].ID = lastId;
+            }
             string csv = Write(list, true);
             GetStream<TEntity>().Seek(0, SeekOrigin.End);
             GetStream<TEntity>().Write(Encoding.Default.GetBytes(csv));
@@ -92,6 +90,12 @@ namespace CodeTest.NET_Application.Data
             return entity;
         }
 
+        private int GetLastId<TEntity>() where TEntity : class, IEntity, new()
+        {
+            var entities = All<TEntity>();
+            return entities.Max(r => r.ID);
+        }
+
         private void RewriteEntities<TEntity>(List<TEntity> entities) where TEntity : class, IEntity, new()
         {
             string csv = Write(entities, true);
@@ -102,200 +106,7 @@ namespace CodeTest.NET_Application.Data
 
         public IEnumerable<TEntity> All<TEntity>() where TEntity : class, IEntity, new()
         {
-            var convertDateTime = new Func<double, DateTime>(csvDate =>
-            {
-                if (csvDate < 1)
-                    throw new ArgumentException("CSV dates cannot be smaller than 0.");
-                var dateOfReference = new DateTime(1900, 1, 1);
-                if (csvDate > 60d)
-                    csvDate = csvDate - 2;
-                else
-                    csvDate = csvDate - 1;
-                return dateOfReference.AddDays(csvDate);
-            });
-
-            using (var sr = new StreamReader(GetStream<TEntity>()))
-            {
-                var data = sr.ReadToEnd();
-                var lines = data.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Skip(_startRowOffset);
-                var props = typeof(TEntity).GetProperties()
-                    .Select(prop =>
-                    {
-                        var displayAttribute =
-                            (DisplayAttribute)prop.GetCustomAttributes(typeof(DisplayAttribute), false)
-                                .FirstOrDefault();
-                        return new
-                        {
-                            Name = prop.Name,
-                            DisplayName = displayAttribute?.Name ?? prop.Name,
-                            Order = displayAttribute == null || !displayAttribute.GetOrder().HasValue
-                                ? 999
-                                : displayAttribute.Order,
-                            PropertyInfo = prop,
-                            PropertyType = prop.PropertyType,
-                            HasDisplayName = displayAttribute != null
-                        };
-                    })
-                    .Where(prop => !string.IsNullOrWhiteSpace(prop.DisplayName))
-                    .ToList();
-                var retList = new List<TEntity>();
-                var columns = new List<CsvMap>();
-                var startCol = _startColumnOffset;
-                var startRow = _startRowOffset;
-                var headerRow = lines.ElementAt(startRow).Split(_delimeter);
-                var endCol = headerRow.Length;
-                var endRow = lines.Count();
-                // Assume first row has column names
-                for (int col = startCol; col < endCol; col++)
-                {
-                    var cellValue = (lines.ElementAt(startRow).Split(_delimeter)[col] ?? string.Empty).ToString().Trim();
-                    if (!string.IsNullOrWhiteSpace(cellValue))
-                    {
-                        columns.Add(new CsvMap()
-                        {
-                            Name = cellValue,
-                            MappedTo = _map == null || _map.Count == 0 ? cellValue :
-                                _map.ContainsKey(cellValue) ? _map[cellValue] : string.Empty,
-                            Index = col
-                        });
-                    }
-                }
-
-                // Now iterate over all the rows
-                for (int rowIndex = startRow + 1; rowIndex < endRow; rowIndex++)
-                {
-                    //TEntity item;
-                    var item = new TEntity();
-                    columns.ForEach(column =>
-                    {
-                        var value = lines.ElementAt(rowIndex).Split(_delimeter)[column.Index];
-                        var valueStr = value == null ? string.Empty : value.ToString().Trim();
-                        var prop = string.IsNullOrWhiteSpace(column.MappedTo)
-                            ? null
-                            : props.FirstOrDefault(p => p.Name.Trim().Contains(column.MappedTo));
-                        // Handle mapping by DisplayName
-                        if (prop == null && !string.IsNullOrWhiteSpace(column.MappedTo))
-                        {
-                            prop = props.FirstOrDefault(p =>
-                                p.HasDisplayName && p.DisplayName.Trim().Contains(column.MappedTo));
-                        }
-
-                        // Excel stores all numbers as doubles, but we're relying on the object's property types
-                        if (prop != null)
-                        {
-                            var propertyType = prop.PropertyType;
-                            object parsedValue = null;
-                            if (propertyType == typeof(int?) || propertyType == typeof(int))
-                            {
-                                int val;
-                                if (!int.TryParse(valueStr, out val))
-                                {
-                                    val = default(int);
-                                }
-
-                                parsedValue = val;
-                            }
-                            else if (propertyType == typeof(short?) || propertyType == typeof(short))
-                            {
-                                short val;
-                                if (!short.TryParse(valueStr, out val))
-                                    val = default(short);
-                                parsedValue = val;
-                            }
-                            else if (propertyType == typeof(long?) || propertyType == typeof(long))
-                            {
-                                long val;
-                                if (!long.TryParse(valueStr, out val))
-                                    val = default(long);
-                                parsedValue = val;
-                            }
-                            else if (propertyType == typeof(decimal?) || propertyType == typeof(decimal))
-                            {
-                                decimal val;
-                                if (!decimal.TryParse(valueStr, out val))
-                                    val = default(decimal);
-                                parsedValue = val;
-                            }
-                            else if (propertyType == typeof(double?) || propertyType == typeof(double))
-                            {
-                                double val;
-                                if (!double.TryParse(valueStr, out val))
-                                    val = default(double);
-                                parsedValue = val;
-                            }
-                            else if (propertyType == typeof(DateTime?) || propertyType == typeof(DateTime))
-                            {
-                                if (value is DateTime)
-                                {
-                                    parsedValue = value;
-                                }
-                                else
-                                {
-                                    try
-                                    {
-                                        DateTime output;
-                                        if (DateTime.TryParse(value, out output))
-                                        {
-                                            parsedValue = output;
-                                        }
-                                        else
-                                        {
-                                            parsedValue = convertDateTime(Double.Parse(value));
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        if (propertyType == typeof(DateTime))
-                                        {
-                                            parsedValue = DateTime.MinValue;
-                                        }
-                                    }
-                                }
-                            }
-                            else if (propertyType.IsEnum)
-                            {
-                                try
-                                {
-                                    parsedValue = Enum.ToObject(propertyType, int.Parse(valueStr));
-                                }
-                                catch
-                                {
-                                    parsedValue = Enum.ToObject(propertyType, 0);
-                                }
-                            }
-                            else if (propertyType == typeof(string))
-                            {
-                                parsedValue = valueStr;
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    parsedValue = Convert.ChangeType(value, propertyType);
-                                }
-                                catch
-                                {
-                                    parsedValue = valueStr;
-                                }
-                            }
-
-                            try
-                            {
-                                //retList.Add((TEntity)parsedValue);
-                                prop.PropertyInfo.SetValue(item, parsedValue);
-                            }
-                            catch (Exception ex)
-                            {
-                                // Indicate parsing error on row?
-                            }
-                        }
-                    });
-                    retList.Add(item);
-                }
-
-                return retList;
-            }
+            return _csvParser.ReadFromStream<TEntity>(GetStream<TEntity>());
         }
 
         private Stream GetStream<TEntity>()
@@ -353,12 +164,12 @@ namespace CodeTest.NET_Application.Data
 
             if (includeHeader)
             {
-                sb.AppendLine(this.CreateCsvHeaderLine(properties));
+                sb.AppendLine(CreateCsvHeaderLine(properties));
             }
 
             foreach (var item in list)
             {
-                sb.AppendLine(this.CreateCsvLine(item, properties));
+                sb.AppendLine(CreateCsvLine(item, properties));
             }
 
             return sb.ToString();
@@ -373,10 +184,10 @@ namespace CodeTest.NET_Application.Data
 
             if (includeHeader)
             {
-                sb.AppendLine(this.CreateCsvHeaderLine(properties));
+                sb.AppendLine(CreateCsvHeaderLine(properties));
             }
 
-            sb.AppendLine(this.CreateCsvLine(item, properties));
+            sb.AppendLine(CreateCsvLine(item, properties));
 
             return sb.ToString();
         }
@@ -396,40 +207,47 @@ namespace CodeTest.NET_Application.Data
                     value = (attribute as DisplayAttribute).Name;
                 }
 
-                this.CreateCsvStringItem(propertyValues, value);
+                CreateCsvStringItem(propertyValues, value);
             }
 
-            return this.CreateCsvLine(propertyValues);
+            return CreateCsvLine(propertyValues);
         }
 
         private string CreateCsvLine<T>(T item, PropertyInfo[] properties)
         {
             List<string> propertyValues = new List<string>();
 
-            foreach (var prop in properties)
+            try
             {
-                string stringformatString = string.Empty;
-                object value = prop.GetValue(item, null);
+                foreach (var prop in properties)
+                {
+                    string stringformatString = string.Empty;
+                    object value = prop.GetValue(item, null);
 
-                if (prop.PropertyType == typeof(string))
-                {
-                    this.CreateCsvStringItem(propertyValues, value);
-                }
-                else if (prop.PropertyType == typeof(string[]))
-                {
-                    this.CreateCsvStringArrayItem(propertyValues, value);
-                }
-                else if (prop.PropertyType == typeof(List<string>))
-                {
-                    this.CreateCsvStringListItem(propertyValues, value);
-                }
-                else
-                {
-                    this.CreateCsvItem(propertyValues, value);
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        CreateCsvStringItem(propertyValues, value);
+                    }
+                    else if (prop.PropertyType == typeof(string[]))
+                    {
+                        CreateCsvStringArrayItem(propertyValues, value);
+                    }
+                    else if (prop.PropertyType == typeof(List<string>))
+                    {
+                        CreateCsvStringListItem(propertyValues, value);
+                    }
+                    else
+                    {
+                        CreateCsvItem(propertyValues, value);
+                    }
                 }
             }
-
-            return this.CreateCsvLine(propertyValues);
+            catch (Exception e)
+            {
+                // Ignore
+            }
+            
+            return CreateCsvLine(propertyValues);
         }
 
         private string CreateCsvLine(IList<string> list)
@@ -454,8 +272,8 @@ namespace CodeTest.NET_Application.Data
             string formatString = "\"{0}\"";
             if (value != null)
             {
-                value = this.CreateCsvLine((List<string>)value);
-                propertyValues.Add(string.Format(formatString, this.ProcessStringEscapeSequence(value)));
+                value = CreateCsvLine((List<string>)value);
+                propertyValues.Add(string.Format(formatString, ProcessStringEscapeSequence(value)));
             }
             else
             {
@@ -468,8 +286,8 @@ namespace CodeTest.NET_Application.Data
             string formatString = "\"{0}\"";
             if (value != null)
             {
-                value = this.CreateCsvLine(((string[])value).ToList());
-                propertyValues.Add(string.Format(formatString, this.ProcessStringEscapeSequence(value)));
+                value = CreateCsvLine(((string[])value).ToList());
+                propertyValues.Add(string.Format(formatString, ProcessStringEscapeSequence(value)));
             }
             else
             {
@@ -482,7 +300,7 @@ namespace CodeTest.NET_Application.Data
             string formatString = "\"{0}\"";
             if (value != null)
             {
-                propertyValues.Add(string.Format(formatString, this.ProcessStringEscapeSequence(value)));
+                propertyValues.Add(string.Format(formatString, ProcessStringEscapeSequence(value)));
             }
             else
             {

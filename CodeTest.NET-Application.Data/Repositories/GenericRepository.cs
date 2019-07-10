@@ -24,6 +24,11 @@ namespace CodeTest.NET_Application.Data.Repositories
             Context.Add(entity);
         }
 
+        public virtual void AddRange(List<T> list)
+        {
+            Context.AddRange(list);
+        }
+
         public void Update(T entity)
         {
             Context.Update(entity);

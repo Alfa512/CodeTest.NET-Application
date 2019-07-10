@@ -23,34 +23,37 @@ namespace CodeTest.NET_Application.Console
 
             _userService = collection.GetService<IUserService>();
 
-            string command = "";
-            var text = "Commands list:\r\n0 - Show All Users; 1 - Find By Id; 2 - Find By Last Name; 3 - Find Within Age Range";
+            var text = "Commands list:\r\n0 - Show All Users; 1 - Find By Id; 2 - Find By Last Name; 3 - Find Within Age Range;\r\n4 - Load From File; 5 - Save To File";
 
             while (true)
             {
                 try
                 {
+                    WriteLine(text);
+                    var command = System.Console.ReadLine();
+                    switch (command)
+                    {
+                        case "0":
+                            ShowAllUsers();
+                            break;
+                        case "1":
+                            FindById();
+                            break;
+                        case "2":
+                            FindByLastName();
+                            break;
+                        case "3":
+                            FindWithinAgeRange();
+                            break;
+                        case "4":
+                            LoadFromFile();
+                            break;
+                        case "5":
+                            SaveToFile();
+                            break;
+                    }
 
-                
-                WriteLine(text);
-                command = System.Console.ReadLine();
-                switch (command)
-                {
-                    case "0":
-                        ShowAllUsers();
-                        break;
-                    case "1":
-                        FindById();
-                        break;
-                    case "2":
-                        FindByLastName();
-                        break;
-                    case "3":
-                        FindWithinAgeRange();
-                        break;
-                }
-
-                WriteLine();
+                    WriteLine();
                 }
 
                 catch (Exception e)
@@ -115,7 +118,7 @@ namespace CodeTest.NET_Application.Console
             WriteLine("Enter Age range (Ex. 18,35): ");
             var str = System.Console.ReadLine();
 
-            var range = str.Split(new[] {',', ';', '/', '-'}, StringSplitOptions.RemoveEmptyEntries);
+            var range = str.Split(new[] { ',', ';', '/', '-' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (range.Length != 2)
             {
@@ -139,6 +142,51 @@ namespace CodeTest.NET_Application.Console
             WriteLine();
             WriteLine("----- ***** -----");
             WriteLine();
+        }
+
+        private static void LoadFromFile()
+        {
+            WriteLine("Enter File path: ");
+            var path = System.Console.ReadLine();
+
+            if (!File.Exists(path))
+            {
+                WriteLine("Please, enter valid file path.");
+                return;
+            }
+
+            var users = _userService.LoadFromFile(path);
+            if (users == null || !users.Any())
+                return;
+            WriteLine();
+            WriteLine("----- ***** -----");
+            WriteLine();
+            foreach (var user in users.ToList())
+            {
+                WriteLine($"{user.Id}, {user.FirstName}, {user.LastName}, {user.Age}");
+            }
+            WriteLine();
+            WriteLine("----- ***** -----");
+            WriteLine();
+        }
+
+        private static void SaveToFile()
+        {
+            WriteLine("Enter File path: ");
+            var path = System.Console.ReadLine();
+
+            if (!Path.IsPathFullyQualified(path))
+            {
+                WriteLine("Please, enter valid file path.");
+                return;
+            }
+
+            _userService.SaveToFile(path);
+
+            WriteLine();
+            WriteLine("----- ***** -----");
+            WriteLine();
+
         }
 
         private static void WriteLine()

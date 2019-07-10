@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CodeTest.NET_Application.Business.Services;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
@@ -14,10 +15,12 @@ namespace CodeTest.NET_Application.Common.Services
     public class UserService : IUserService
     {
         private IUserRepository _repository;
+        private CsvParser _csvParser;
 
         public UserService(IUserRepository repository)
         {
             _repository = repository;
+            _csvParser = new CsvParser();
         }
 
         public IEnumerable<UserVm> OrderUsers(List<UserVm> users, OrderByUserFilter filter)
@@ -74,7 +77,6 @@ namespace CodeTest.NET_Application.Common.Services
             return null;
         }
 
-        /*ToDo Not Implemented*/
         public UserVm Update(UserVm userParam)
         {
             var userModel = UserMapper.Mapper().Map<User>(userParam);
@@ -87,37 +89,41 @@ namespace CodeTest.NET_Application.Common.Services
             user = ViewToDomain(userParam);
 
             _repository.Update(user);
-            //_repository.SaveCganges();
 
             return GetById(userParam.Id);
         }
         
-        /*ToDo Not Implemented*/
-        public List<UserVm> LoadFromFile(byte[] content)
+        public List<UserVm> LoadFromFile(string path)
         {
-            var csvServices = new CsvService();
-            var users = csvServices.ParseUsers(content).ToList();
-
-            foreach (var user in users)
+            if (!File.Exists(path))
             {
-                _repository.Add(ViewToDomain(user));
+                return null;
             }
 
-            return users;
+            var file = File.OpenRead(path);
+
+            var users = _csvParser.ReadFromStream<User>(file).ToList();
+            _repository.AddRange(users);
+
+            return DomainToViewList(users).ToList();
         }
 
-        /*ToDo Not Implemented*/
-        public List<UserVm> LoadFromText(string text)
+        public void SaveToFile(string path)
         {
-            var csvServices = new CsvService();
-            var users = csvServices.ParseUsers(text).ToList();
-
-            foreach (var user in users)
+            if (File.Exists(path))
             {
-                _repository.Add(ViewToDomain(user));
+                File.Delete(path);
             }
 
-            return users;
+            var file = File.CreateText(path);
+            file.WriteLine("ID,FirstName,LastName,Age");
+
+            foreach (var user in _repository.All())
+            {
+                file.WriteLine($"{user.ID},{user.FirstName},{user.LastName},{user.Age}");
+            }
+            file.Close();
+
         }
 
         public void Delete(UserVm user)

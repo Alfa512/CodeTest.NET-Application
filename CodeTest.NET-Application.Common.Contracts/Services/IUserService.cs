@@ -12,8 +12,9 @@ namespace CodeTest.NET_Application.Common.Contracts.Services
         IEnumerable<UserVm> FindWithinAgeRange(int minAge, int maxAge);
         UserVm Create(UserVm user);
         UserVm Update(UserVm user);
-        List<UserVm> LoadFromFile(byte[] content);
-        List<UserVm> LoadFromText(string text);
+        List<UserVm> LoadFromFile(string path);
+        void SaveToFile(string path);
+
         void Delete(UserVm user);
     }
 }
