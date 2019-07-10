@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using CodeTest.NET_Application.Common.Models.Enums;
 using CodeTest.NET_Application.Common.Models.ViewModel;
 
 namespace CodeTest.NET_Application.Common.Contracts.Services

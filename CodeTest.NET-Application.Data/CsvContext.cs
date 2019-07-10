@@ -16,7 +16,7 @@ namespace CodeTest.NET_Application.Data
 {
     public class CsvContext : IDataContext
     {
-        private CsvParser _csvParser;
+        private CsvService _csvService;
         private IConfigurationService _configurationService;
         private char _delimeter;
 
@@ -26,7 +26,7 @@ namespace CodeTest.NET_Application.Data
 
         public CsvContext(IConfigurationService configurationService)
         {
-            _csvParser = new CsvParser();
+            _csvService = new CsvService();
             _configurationService = configurationService;
             _delimeter = ',';
             _usersDirty = true;
@@ -106,7 +106,7 @@ namespace CodeTest.NET_Application.Data
 
         public IEnumerable<TEntity> All<TEntity>() where TEntity : class, IEntity, new()
         {
-            return _csvParser.ReadFromStream<TEntity>(GetStream<TEntity>());
+            return _csvService.ReadFromStream<TEntity>(GetStream<TEntity>());
         }
 
         private Stream GetStream<TEntity>()

@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using CodeTest.NET_Application.Common.Contracts.Services;
+﻿using CodeTest.NET_Application.Common.Contracts.Services;
 using Microsoft.Extensions.Configuration;
 
 namespace CodeTest.NET_Application.Common.Services

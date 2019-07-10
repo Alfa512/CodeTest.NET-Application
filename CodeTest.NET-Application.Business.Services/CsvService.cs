@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using CodeTest.NET_Application.Common.Models.ViewModel;
 using System.Text;
 using CodeTest.NET_Application.Data.Models;
 
@@ -11,99 +10,28 @@ namespace CodeTest.NET_Application.Business.Services
 {
     public class CsvService
     {
-        public IEnumerable<UserVm> ParseUsers(byte[] bytes)
+        private Dictionary<string, string> _map;
+        private int _startRowOffset;
+        private int _startColumnOffset;
+        private char _delimeter;
+
+        public CsvService()
         {
-            var users = new List<UserVm>();
-
-            var csvParser = new CsvParser();
-
-            var delimiter = ';';
-            var qualifier = '\r';
-            var content = Encoding.Default.GetString(bytes);
-            var encoding = csvParser.GetEncoding(bytes);
-            var utf8 = Encoding.UTF8;
-
-
-            var convertedBytes = Encoding.Convert(encoding, utf8, bytes);
-            if (!Equals(encoding, utf8))
-                content = utf8.GetString(convertedBytes);
-
-
-            var parser = csvParser.Parse(content, delimiter, qualifier).ToList();
-
-            foreach (var strings in parser)
-            {
-                try
-                {
-                    if (strings == null) continue;
-
-                    var fields = strings.ToList();
-
-                    users.Add(new UserVm
-                    {
-                        Id = fields[0] != null ? Convert.ToInt32(fields[0]) : 0,
-                        FirstName = fields[1] ?? "",
-                        LastName = fields[2] ?? "",
-                        Age = fields[3] != null ? Convert.ToByte(fields[3]) : byte.MinValue
-                    });
-                }
-                catch (Exception)
-                {
-                    // Ignore
-                }
-            }
-
-            return users;
+            _map = null;
+            _startRowOffset = 0;
+            _startColumnOffset = 0;
+            _delimeter = ',';
         }
-        public IEnumerable<UserVm> ParseUsers(string text)
+        public CsvService(Dictionary<string, string> map = null, int startRowOffset = 0, int startColumnOffset = 0, char delimeter = ',')
         {
-            var users = new List<UserVm>();
-
-            var csvParser = new CsvParser();
-
-            var delimiter = ';';
-            var qualifier = '\r';
-            var bytes = Encoding.Default.GetBytes(text);
-            var content = text;
-            var encoding = csvParser.GetEncoding(text);
-            var utf8 = Encoding.UTF8;
-
-
-            var convertedBytes = Encoding.Convert(encoding, utf8, bytes);
-            if (!Equals(encoding, utf8))
-                content = utf8.GetString(convertedBytes);
-
-
-            var parser = csvParser.Parse(content, delimiter, qualifier).ToList();
-
-            foreach (var strings in parser)
-            {
-                try
-                {
-                    if (strings == null) continue;
-
-                    var fields = strings.ToList();
-
-                    users.Add(new UserVm
-                    {
-                        Id = fields[0] != null ? Convert.ToInt32(fields[0]) : 0,
-                        FirstName = fields[1] ?? "",
-                        LastName = fields[2] ?? "",
-                        Age = fields[3] != null ? Convert.ToByte(fields[3]) : byte.MinValue
-                    });
-                }
-                catch (Exception)
-                {
-                    // Ignore
-                }
-            }
-
-            return users;
+            _map = map;
+            _startRowOffset = startRowOffset;
+            _startColumnOffset = startColumnOffset;
+            _delimeter = delimeter;
         }
 
-        public static List<T> CsvToList<T>(Stream stream, Dictionary<string, string> map = null, int startRowOffset = 0, int startColumnOffset = 0, int endRowOffset = 0, char delimeter = ',') where T : new()
+        public IEnumerable<TEntity> ReadFromStream<TEntity>(Stream stream) where TEntity : class, IEntity, new()
         {
-            //DateTime Conversion
             var convertDateTime = new Func<double, DateTime>(csvDate =>
             {
                 if (csvDate < 1)
@@ -115,65 +43,73 @@ namespace CodeTest.NET_Application.Business.Services
                     csvDate = csvDate - 1;
                 return dateOfReference.AddDays(csvDate);
             });
+
             using (var sr = new StreamReader(stream))
             {
                 var data = sr.ReadToEnd();
-                var lines = data.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Skip(startRowOffset);
-                var props = typeof(T).GetProperties()
-                .Select(prop =>
-                {
-                    var displayAttribute = (DisplayAttribute)prop.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault();
-                    return new
+                var lines = data.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Skip(_startRowOffset);
+                var props = typeof(TEntity).GetProperties()
+                    .Select(prop =>
                     {
-                        Name = prop.Name,
-                        DisplayName = displayAttribute?.Name ?? prop.Name,
-                        Order = displayAttribute == null || !displayAttribute.GetOrder().HasValue ? 999 : displayAttribute.Order,
-                        PropertyInfo = prop,
-                        PropertyType = prop.PropertyType,
-                        HasDisplayName = displayAttribute != null
-                    };
-                })
-                .Where(prop => !string.IsNullOrWhiteSpace(prop.DisplayName))
-                .ToList();
-                var retList = new List<T>();
+                        var displayAttribute =
+                            (DisplayAttribute)prop.GetCustomAttributes(typeof(DisplayAttribute), false)
+                                .FirstOrDefault();
+                        return new
+                        {
+                            Name = prop.Name,
+                            DisplayName = displayAttribute?.Name ?? prop.Name,
+                            Order = displayAttribute == null || !displayAttribute.GetOrder().HasValue
+                                ? 999
+                                : displayAttribute.Order,
+                            PropertyInfo = prop,
+                            PropertyType = prop.PropertyType,
+                            HasDisplayName = displayAttribute != null
+                        };
+                    })
+                    .Where(prop => !string.IsNullOrWhiteSpace(prop.DisplayName))
+                    .ToList();
+                var retList = new List<TEntity>();
                 var columns = new List<CsvMap>();
-                var startCol = startColumnOffset;
-                var startRow = startRowOffset;
-                var headerRow = lines.ElementAt(startRow).Split(delimeter);
+                var startCol = _startColumnOffset;
+                var startRow = _startRowOffset;
+                var headerRow = lines.ElementAt(startRow).Split(_delimeter);
                 var endCol = headerRow.Length;
                 var endRow = lines.Count();
                 // Assume first row has column names
                 for (int col = startCol; col < endCol; col++)
                 {
-                    var cellValue = (lines.ElementAt(startRow).Split(delimeter)[col] ?? string.Empty).ToString().Trim();
+                    var cellValue = (lines.ElementAt(startRow).Split(_delimeter)[col] ?? string.Empty).ToString().Trim();
                     if (!string.IsNullOrWhiteSpace(cellValue))
                     {
                         columns.Add(new CsvMap()
                         {
                             Name = cellValue,
-                            MappedTo = map == null || map.Count == 0 ?
-                        cellValue :
-                        map.ContainsKey(cellValue) ? map[cellValue] : string.Empty,
+                            MappedTo = _map == null || _map.Count == 0 ? cellValue :
+                                _map.ContainsKey(cellValue) ? _map[cellValue] : string.Empty,
                             Index = col
                         });
                     }
                 }
+
                 // Now iterate over all the rows
                 for (int rowIndex = startRow + 1; rowIndex < endRow; rowIndex++)
                 {
-                    var item = new T();
+                    var item = new TEntity();
                     columns.ForEach(column =>
                     {
-                        var value = lines.ElementAt(rowIndex).Split(delimeter)[column.Index];
+                        var value = lines.ElementAt(rowIndex).Split(_delimeter)[column.Index];
                         var valueStr = value == null ? string.Empty : value.ToString().Trim();
-                        var prop = string.IsNullOrWhiteSpace(column.MappedTo) ?
-                        null :
-                        props.FirstOrDefault(p => p.Name.Trim().Contains(column.MappedTo));
+                        var prop = string.IsNullOrWhiteSpace(column.MappedTo)
+                            ? null
+                            : props.FirstOrDefault(p => p.Name.Trim().Contains(column.MappedTo));
                         // Handle mapping by DisplayName
                         if (prop == null && !string.IsNullOrWhiteSpace(column.MappedTo))
                         {
-                            prop = props.FirstOrDefault(p => p.HasDisplayName && p.DisplayName.Trim().Contains(column.MappedTo));
+                            prop = props.FirstOrDefault(p =>
+                                p.HasDisplayName && p.DisplayName.Trim().Contains(column.MappedTo));
                         }
+
                         // Excel stores all numbers as doubles, but we're relying on the object's property types
                         if (prop != null)
                         {
@@ -186,6 +122,7 @@ namespace CodeTest.NET_Application.Business.Services
                                 {
                                     val = default(int);
                                 }
+
                                 parsedValue = val;
                             }
                             else if (propertyType == typeof(short?) || propertyType == typeof(short))
@@ -271,20 +208,23 @@ namespace CodeTest.NET_Application.Business.Services
                                     parsedValue = valueStr;
                                 }
                             }
+
                             try
                             {
                                 prop.PropertyInfo.SetValue(item, parsedValue);
                             }
-                            catch (Exception ex)
+                            catch (Exception)
                             {
-                                // Indicate parsing error on row?
+                                // Ignore
                             }
                         }
                     });
                     retList.Add(item);
                 }
+
                 return retList;
             }
         }
+
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using CodeTest.NET_Application.Business.Services;
 using CodeTest.NET_Application.Common.Contracts.Repositories;
 using CodeTest.NET_Application.Common.Contracts.Services;
-using CodeTest.NET_Application.Common.Models.Enums;
 using CodeTest.NET_Application.Common.Models.ViewModel;
 using CodeTest.NET_Application.Data.Models;
 using CodeTest.NET_Application.Maps;
@@ -15,33 +14,12 @@ namespace CodeTest.NET_Application.Common.Services
     public class UserService : IUserService
     {
         private IUserRepository _repository;
-        private CsvParser _csvParser;
+        private CsvService _csvService;
 
         public UserService(IUserRepository repository)
         {
             _repository = repository;
-            _csvParser = new CsvParser();
-        }
-
-        public IEnumerable<UserVm> OrderUsers(List<UserVm> users, OrderByUserFilter filter)
-        {
-            switch (filter)
-            {
-                case OrderByUserFilter.ByNameAsk:
-                    return users.OrderBy(u => u.FirstName);
-                case OrderByUserFilter.ByNameDesc:
-                    return users.OrderByDescending(u => u.FirstName);
-                case OrderByUserFilter.ByLastNameAsc:
-                    return users.OrderBy(u => u.LastName);
-                case OrderByUserFilter.ByLastNameDesc:
-                    return users.OrderByDescending(u => u.LastName);
-
-
-                default:
-                {
-                    return users.OrderBy(u => u.FirstName).ThenBy(u => u.LastName);
-                }
-            }
+            _csvService = new CsvService();
         }
 
         public IEnumerable<UserVm> GetAll()
@@ -102,7 +80,7 @@ namespace CodeTest.NET_Application.Common.Services
 
             var file = File.OpenRead(path);
 
-            var users = _csvParser.ReadFromStream<User>(file).ToList();
+            var users = _csvService.ReadFromStream<User>(file).ToList();
             _repository.AddRange(users);
 
             return DomainToViewList(users).ToList();
