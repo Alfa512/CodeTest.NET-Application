@@ -13,6 +13,5 @@ namespace CodeTest.NET_Application.Common.Contracts.Data
         TEntity Update<TEntity>(TEntity entity) where TEntity : class, IEntity, new();
         TEntity Delete<TEntity>(TEntity entity) where TEntity : class, IEntity, new();
         IEnumerable<TEntity> All<TEntity>() where TEntity : class, IEntity, new();
-        int SaveChanges();
     }
 }

@@ -152,7 +152,7 @@ namespace CodeTest.NET_Application.Common.Services
                                 }
                                 else if (propertyType == typeof(DateTime?) || propertyType == typeof(DateTime))
                                 {
-                                    if (value is DateTime)
+                                    if (value != null && value is DateTime)
                                     {
                                         parsedValue = value;
                                     }

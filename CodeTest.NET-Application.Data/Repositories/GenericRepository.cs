@@ -38,11 +38,5 @@ namespace CodeTest.NET_Application.Data.Repositories
         {
             Context.Delete(entity);
         }
-
-        public void SaveChanges()
-        {
-            Context.SaveChanges();
-        }
-
     }
 }

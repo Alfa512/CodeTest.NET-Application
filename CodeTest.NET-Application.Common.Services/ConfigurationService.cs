@@ -6,7 +6,7 @@ namespace CodeTest.NET_Application.Common.Services
 {
     public class ConfigurationService : IConfigurationService
     {
-        private IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
         public ConfigurationService()
         {

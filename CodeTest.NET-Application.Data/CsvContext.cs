@@ -248,7 +248,7 @@ namespace CodeTest.NET_Application.Data
             }
             catch (Exception e)
             {
-                // Ignore
+                Console.WriteLine(e.Message);
             }
 
             return CreateCsvLine(propertyValues);
