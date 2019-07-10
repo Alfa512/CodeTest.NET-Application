@@ -82,9 +82,9 @@ namespace CodeTest.NET_Application.Business.Services
             var file = File.OpenRead(path);
 
             var users = _csvService.ReadFromStream<User>(file).ToList();
-            _repository.AddRange(users);
+            var allUsers = _repository.AddRange(users).ToList();
 
-            return DomainToViewList(users).ToList();
+            return DomainToViewList(allUsers).ToList();
         }
 
         public void SaveToFile(string path)
@@ -107,7 +107,6 @@ namespace CodeTest.NET_Application.Business.Services
 
         public void Delete(UserVm user)
         {
-            ;
             if (user != null)
             {
                 _repository.Delete(ViewToDomain(user));

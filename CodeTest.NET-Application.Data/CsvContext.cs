@@ -30,7 +30,7 @@ namespace CodeTest.NET_Application.Data
             _configurationService = configurationService;
             _delimeter = ',';
             _usersDirty = true;
-            _userStorageFilePath = "C:/Temp/Users.csv"; //configurationService.UserStoragePath;
+            _userStorageFilePath = configurationService.UserStoragePath;
         }
 
         IUserRepository IDataContext.Users => new UserRepository(this);
@@ -38,11 +38,11 @@ namespace CodeTest.NET_Application.Data
         public TEntity Add<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
         {
             entity.ID = GetLastId<TEntity>() + 1;
-            string csv = Write(entity, true);
 
-            GetStream<TEntity>().Seek(0, SeekOrigin.End);
-            GetStream<TEntity>().Write(Encoding.Default.GetBytes(csv));
-            _usersDirty = true;
+            var entities = All<TEntity>().ToList();
+            entities.Add(entity);
+
+            RewriteEntities(entities);
 
             return entity;
         }
@@ -53,12 +53,13 @@ namespace CodeTest.NET_Application.Data
             {
                 list[i].ID = lastId;
             }
-            string csv = Write(list, true);
-            GetStream<TEntity>().Seek(0, SeekOrigin.End);
-            GetStream<TEntity>().Write(Encoding.Default.GetBytes(csv));
-            _usersDirty = true;
 
-            return list;
+            var entities = All<TEntity>().ToList();
+            entities.AddRange(list);
+
+            RewriteEntities(entities);
+
+            return entities;
         }
 
         public TEntity Update<TEntity>(TEntity entity) where TEntity : class, IEntity, new()
@@ -93,14 +94,17 @@ namespace CodeTest.NET_Application.Data
         private int GetLastId<TEntity>() where TEntity : class, IEntity, new()
         {
             var entities = All<TEntity>();
+            if (!entities.Any())
+                return 0;
             return entities.Max(r => r.ID);
         }
 
         private void RewriteEntities<TEntity>(List<TEntity> entities) where TEntity : class, IEntity, new()
         {
             string csv = Write(entities, true);
+            var bytes = Encoding.Default.GetBytes(csv);
             GetStream<TEntity>().Seek(0, SeekOrigin.Begin);
-            GetStream<TEntity>().Write(Encoding.Default.GetBytes(csv));
+            GetStream<TEntity>().Write(bytes, 0, bytes.Length);
             _usersDirty = true;
         }
 
@@ -109,18 +113,18 @@ namespace CodeTest.NET_Application.Data
             return _csvService.ReadFromStream<TEntity>(GetStream<TEntity>());
         }
 
-        private Stream GetStream<TEntity>()
+        private FileStream GetStream<TEntity>()
         {
             switch (typeof(TEntity).Name.ToString())
             {
                 case "User":
                     return UserStream();
                 default:
-                    return new MemoryStream();
+                    return null;
             }
         }
 
-        private static Stream UserStream()
+        private static FileStream UserStream()
         {
             if (_userStorage == null)
             {
@@ -154,7 +158,7 @@ namespace CodeTest.NET_Application.Data
             }
         }
 
-        private string Write<T>(IList<T> list, bool includeHeader = true)
+        private string Write<T>(List<T> list, bool includeHeader = true)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -246,7 +250,7 @@ namespace CodeTest.NET_Application.Data
             {
                 // Ignore
             }
-            
+
             return CreateCsvLine(propertyValues);
         }
 
@@ -269,7 +273,7 @@ namespace CodeTest.NET_Application.Data
 
         private void CreateCsvStringListItem(List<string> propertyValues, object value)
         {
-            string formatString = "\"{0}\"";
+            string formatString = "{0}";
             if (value != null)
             {
                 value = CreateCsvLine((List<string>)value);
@@ -283,7 +287,7 @@ namespace CodeTest.NET_Application.Data
 
         private void CreateCsvStringArrayItem(List<string> propertyValues, object value)
         {
-            string formatString = "\"{0}\"";
+            string formatString = "{0}";
             if (value != null)
             {
                 value = CreateCsvLine(((string[])value).ToList());
@@ -297,7 +301,7 @@ namespace CodeTest.NET_Application.Data
 
         private void CreateCsvStringItem(List<string> propertyValues, object value)
         {
-            string formatString = "\"{0}\"";
+            string formatString = "{0}";
             if (value != null)
             {
                 propertyValues.Add(string.Format(formatString, ProcessStringEscapeSequence(value)));

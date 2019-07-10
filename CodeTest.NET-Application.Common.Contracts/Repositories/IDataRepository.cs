@@ -7,7 +7,7 @@ namespace CodeTest.NET_Application.Common.Contracts.Repositories
     {
         IEnumerable<T> All();
         void Add(T entity);
-        void AddRange(List<T> list);
+        IEnumerable<T> AddRange(List<T> list);
         void Update(T entity);
         void Delete(T entity);
         void SaveChanges();

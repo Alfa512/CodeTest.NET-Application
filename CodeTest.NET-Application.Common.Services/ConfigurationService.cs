@@ -1,4 +1,5 @@
-﻿using CodeTest.NET_Application.Common.Contracts.Services;
+﻿using System.IO;
+using CodeTest.NET_Application.Common.Contracts.Services;
 using Microsoft.Extensions.Configuration;
 
 namespace CodeTest.NET_Application.Common.Services
@@ -20,9 +21,8 @@ namespace CodeTest.NET_Application.Common.Services
         public static IConfiguration LoadConfiguration()
         {
             var builder = new ConfigurationBuilder()
-                //.SetBasePath()
-                .AddJsonFile("appsettings.json", optional: true,
-                    reloadOnChange: true);
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", true, true);
             return builder.Build();
         }
     }
